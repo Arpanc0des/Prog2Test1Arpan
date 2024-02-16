@@ -3,6 +3,7 @@ package com.example.prog2lab1arpan;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
@@ -19,7 +20,10 @@ public class HelloController implements Initializable {
     public PasswordField passwordInput;
     @FXML
     public Label errorMessage;
-    public int logCount;
+    public int logCount = 5;
+    @FXML
+    public Button button;
+
     @FXML
     public void onHelloButtonClick(ActionEvent actionEvent) {
         String userNameText = userInput.getText();
@@ -28,9 +32,6 @@ public class HelloController implements Initializable {
             errorMessage.setText("Please Provide Username or Password.");
         } else {
             errorMessage.setText(""); // Clear error message
-            if (logCount==0) {
-                errorMessage.setText("Sorry, Your Account is Locked!!!");
-            }
             checkCredentials(userInput.getText(), passwordInput.getText());
         }
     }
@@ -43,7 +44,9 @@ public class HelloController implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
         searchInDb();
     }
+
     private ArrayList<logincred> list = new ArrayList<>();
+
     public void searchInDb() {
         list.clear(); // Clear the ArrayList before adding new items
         // establish a database connection
@@ -61,7 +64,6 @@ public class HelloController implements Initializable {
                 int id = resultSet.getInt("id");
                 String user = resultSet.getString("user");
                 String password = resultSet.getString(("password"));
-                System.out.println(id+user+password);
                 // add the data to the ArrayList
                 list.add(new logincred(id, user, password));
             }
@@ -69,16 +71,23 @@ public class HelloController implements Initializable {
             e.printStackTrace();
         }
     }
+
     public boolean checkCredentials(String userName, String password) {
         for (logincred cred : list) {
             if (cred.getUser().equals(userName) && cred.getPassword().equals(password)) {
                 errorMessage.setText("Success!!!");
-                logCount=0;
+                logCount = 5;
                 return true; // found matching credentials
             }
         }
-        logCount++;
-        errorMessage.setText("You can not log in. You do not exist in the database");
+        logCount--;
+        if (logCount==0){
+            errorMessage.setText("");
+            errorMessage.setText("Sorry, Your Account is Locked!!!");
+            button.setDisable(true);
+            return false;
+        }
+        errorMessage.setText("Sorry, Invalid Username or Password. You have "+logCount+" attempts left");
         return false; // no matching credentials found
     }
 }
